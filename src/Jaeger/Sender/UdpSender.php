@@ -29,11 +29,9 @@ class UdpSender implements Sender
     private $post = '';
 
     /**
-     * Shared across the process so the worker keeps one UDP socket for its whole life.
-     *
      * @var resource|null
      */
-    private static $socket = null;
+    private $socket = null;
 
     /**
      * @var AgentClient|null
@@ -49,9 +47,7 @@ class UdpSender implements Sender
     {
         [$this->host, $this->post] = explode(':', $hostPost);
         $this->agentClient = $agentClient;
-        if (!is_resource(self::$socket)) {
-            self::$socket = fsockopen("udp://$this->host", $this->post);
-        }
+        $this->socket = fsockopen("udp://$this->host", $this->post);
         $this->tran = $tran;
     }
 
@@ -60,7 +56,7 @@ class UdpSender implements Sender
      */
     public function isOpen()
     {
-        return is_resource(self::$socket);
+        return is_resource($this->socket);
     }
 
     /**
@@ -75,7 +71,7 @@ class UdpSender implements Sender
         $this->agentClient->emitBatch($batch);
         $len = $this->tran->available();
         if ($len > 0 && $this->isOpen()) {
-            $res = fwrite(self::$socket, $this->tran->read($len));
+            $res = fwrite($this->socket, $this->tran->read($len));
             if (false === $res) {
                 throw new \Exception('emit failse');
             }
@@ -88,6 +84,9 @@ class UdpSender implements Sender
 
     public function close()
     {
-        // Keep the shared socket open for the process lifetime; nothing to close per flush.
+        if (is_resource($this->socket)) {
+            fclose($this->socket);
+        }
+        $this->socket = null;
     }
 }

@@ -58,9 +58,8 @@ class UdpSenderTest extends TestCase
 
     public function testClose()
     {
-        // Socket is process-wide and reused, so close() keeps it open.
         $this->udpSender->close();
-        $this->assertTrue($this->udpSender->isOpen());
+        $this->assertFalse($this->udpSender->isOpen());
     }
 
     public function testEmitBatch()
