@@ -56,7 +56,7 @@ class UdpSender implements Sender
      */
     public function isOpen()
     {
-        return null !== $this->socket;
+        return is_resource($this->socket);
     }
 
     /**

@@ -260,8 +260,12 @@ class Jaeger implements \OpenTracing\Tracer
      */
     public function flush(): void
     {
-        $this->reportSpan();
-        $this->reporter->close();
+        // Close the transport even if reportSpan() throws, otherwise the UDP socket leaks.
+        try {
+            $this->reportSpan();
+        } finally {
+            $this->reporter->close();
+        }
     }
 
     private function generateId()
